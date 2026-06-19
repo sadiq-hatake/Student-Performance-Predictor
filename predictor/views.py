@@ -35,6 +35,7 @@ def home(request):
                 2
             )
 
+            student.suggestion = generate_suggestion(student)
             student.save()
 
             messages.success(
@@ -128,7 +129,9 @@ def edit_student(request, id):
                 prediction[0],
                 2
             )
-
+            updated_student.suggestion = generate_suggestion(
+    updated_student
+)
             updated_student.save()
 
             messages.success(
@@ -171,3 +174,42 @@ def dashboard(request):
         'predictor/dashboard.html',
         context
     )
+
+def generate_suggestion(student):
+
+    suggestions = []
+
+    if student.attendance < 75:
+        suggestions.append(
+            "Improve attendance above 75%."
+        )
+
+    if student.internal_test_1 < 25:
+        suggestions.append(
+            "Focus more on Internal Test 1 preparation."
+        )
+
+    if student.internal_test_2 < 25:
+        suggestions.append(
+            "Focus more on Internal Test 2 preparation."
+        )
+
+    if student.assignment_score < 7:
+        suggestions.append(
+            "Submit assignments on time and improve quality."
+        )
+
+    if student.study_hours < 3:
+        suggestions.append(
+            "Increase daily study time to at least 3 hours."
+        )
+
+    if student.predicted_score < 60:
+        suggestions.append(
+            "Consider attending extra classes or seeking guidance."
+        )
+
+    if not suggestions:
+        return "Excellent performance. Keep up the good work!"
+
+    return " ".join(suggestions)
