@@ -1,6 +1,7 @@
 from django import forms
 from .models import Student
 
+
 class StudentForm(forms.ModelForm):
 
     class Meta:
@@ -9,8 +10,8 @@ class StudentForm(forms.ModelForm):
         fields = [
             'name',
             'attendance',
-            'internal_marks',
+            'internal_test_1',
+            'internal_test_2',
             'assignment_score',
-            'study_hours',
-            'gpa'
+            'study_hours'
         ]
