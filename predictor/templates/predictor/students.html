@@ -1,138 +1,246 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'predictor/base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Students</title>
+{% block title %}Students — Student Predictor{% endblock %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-</head>
+{% block extra_css %}
+<style>
+.sp-search-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.sp-search-wrap {
+    position: relative;
+    flex: 1;
+}
+.sp-search-wrap i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #475569;
+    pointer-events: none;
+}
+.sp-search-wrap input {
+    padding-left: 38px;
+}
 
-<body>
+.sp-students-table { width: 100%; border-collapse: collapse; }
+.sp-students-table thead th {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #475569;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    white-space: nowrap;
+}
+.sp-students-table tbody td {
+    padding: 14px 16px;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    font-size: 14px;
+    vertical-align: middle;
+}
+.sp-students-table tbody tr:last-child td { border-bottom: none; }
+.sp-students-table tbody tr:hover td { background: rgba(255,255,255,.02); }
 
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
+.sp-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #38bdf8;
+    flex-shrink: 0;
+}
+.sp-name-cell { display: flex; align-items: center; gap: 10px; }
 
-        <a class="navbar-brand" href="{% url 'home' %}">
-            Student Predictor
-        </a>
+.sp-score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+.sp-score-high   { background: rgba(34,197,94,.1);  border: 1px solid rgba(34,197,94,.2);  color: #4ade80; }
+.sp-score-mid    { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.2); color: #fbbf24; }
+.sp-score-low    { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.2);  color: #f87171; }
 
-        <div>
-            <a href="{% url 'students' %}"
-               class="btn btn-outline-light me-2">
-                Students
-            </a>
+.sp-att-bar { display: flex; align-items: center; gap: 8px; }
+.sp-att-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
+.sp-att-bar-fill  { height: 100%; border-radius: 2px; background: #38bdf8; }
 
-            <a href="{% url 'dashboard' %}"
-               class="btn btn-outline-light">
-                Dashboard
-            </a>
-        </div>
+.sp-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity .15s;
+    border: 1px solid;
+}
+.sp-action-btn:hover { opacity: .8; text-decoration: none; }
+.sp-action-edit   { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.25); color: #fbbf24; }
+.sp-action-delete { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.25);  color: #f87171; }
 
+.sp-empty {
+    text-align: center;
+    padding: 56px 24px;
+    color: #475569;
+}
+.sp-empty i { font-size: 40px; display: block; margin-bottom: 12px; color: #334155; }
+.sp-empty-title { font-size: 15px; font-weight: 500; color: #64748b; margin-bottom: 6px; }
+.sp-empty-sub   { font-size: 13px; }
+
+.sp-suggestion-text {
+    font-size: 12px;
+    color: #64748b;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .sp-students-table thead th:nth-child(4),
+    .sp-students-table tbody td:nth-child(4) { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:600;color:#f1f5f9;margin:0;">Students</h1>
+        <p style="font-size:13px;color:#475569;margin:4px 0 0;">
+            {% if students %}
+                {{ students|length }} record{{ students|length|pluralize }} found
+            {% else %}
+                No students yet
+            {% endif %}
+        </p>
     </div>
-</nav>
+    <a href="{% url 'home' %}" class="sp-btn sp-btn-primary" style="gap:8px;">
+        <i class="ti ti-plus" style="font-size:16px"></i>
+        Add student
+    </a>
+</div>
 
-<div class="container mt-5">
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-
-        <h2>Students</h2>
-
-        <a href="{% url 'home' %}"
-           class="btn btn-success">
-            Add Student
-        </a>
-
-    </div>
-
-    <form method="GET" class="mb-4">
-
-        <div class="input-group">
-
+<form method="GET" class="mb-4">
+    <div class="sp-search-bar">
+        <div class="sp-search-wrap">
+            <i class="ti ti-search"></i>
             <input type="text"
                    name="q"
                    value="{{ request.GET.q }}"
                    class="form-control"
-                   placeholder="Search student">
-
-            <button class="btn btn-primary" type="submit">
-                Search
-            </button>
-
+                   placeholder="Search by name…"
+                   autocomplete="off">
         </div>
+        <button class="sp-btn sp-btn-secondary" type="submit" style="white-space:nowrap;">
+            <i class="ti ti-search" style="font-size:15px"></i>
+            Search
+        </button>
+        {% if request.GET.q %}
+        <a href="{% url 'students' %}" class="sp-btn sp-btn-secondary" style="white-space:nowrap;">
+            <i class="ti ti-x" style="font-size:15px"></i>
+            Clear
+        </a>
+        {% endif %}
+    </div>
+</form>
 
-    </form>
-
+<div class="sp-card" style="padding:0;overflow:hidden;">
     <div class="table-responsive">
-
-        <table class="table table-bordered table-striped align-middle">
-
-            <thead class="table-dark">
-
+        <table class="sp-students-table">
+            <thead>
                 <tr>
-    <th>Name</th>
-    <th>Attendance</th>
-    <th>Predicted Score</th>
-    <th>Actions</th>
-    <th>Suggestions</th>
-</tr>
-
+                    <th>Student</th>
+                    <th>Attendance</th>
+                    <th>Predicted score</th>
+                    <th>Suggestion</th>
+                    <th>Actions</th>
+                </tr>
             </thead>
-
             <tbody>
-
-            {% for s in students %}
-
+                {% for s in students %}
                 <tr>
-
-                    <td>{{ s.name }}</td>
-
-                    <td>{{ s.attendance }}</td>
-
-                    <td>{{ s.predicted_score }}</td>
-
-                    <td>{{ s.suggestion }}</td>
+                    <td>
+                        <div class="sp-name-cell">
+                            <div class="sp-avatar">
+                                {{ s.name|slice:":2"|upper }}
+                            </div>
+                            <span style="font-weight:500;color:#f1f5f9;">{{ s.name }}</span>
+                        </div>
+                    </td>
 
                     <td>
-
-                        <a href="{% url 'edit_student' s.id %}"
-                           class="btn btn-warning btn-sm">
-                            Edit
-                        </a>
-
-                        <a href="{% url 'delete_student' s.id %}"
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Are you sure you want to delete this student?');">
-                            Delete
-                        </a>
-
+                        <div class="sp-att-bar">
+                            <span style="min-width:36px;font-size:13px;">{{ s.attendance }}%</span>
+                            <div class="sp-att-bar-track">
+                                <div class="sp-att-bar-fill" style="width:{{ s.attendance }}%"></div>
+                            </div>
+                        </div>
                     </td>
 
+                    <td>
+                        {% with score=s.predicted_score %}
+                        <span class="sp-score-pill {% if score >= 75 %}sp-score-high{% elif score >= 50 %}sp-score-mid{% else %}sp-score-low{% endif %}">
+                            <i class="ti {% if score >= 75 %}ti-trending-up{% elif score >= 50 %}ti-minus{% else %}ti-trending-down{% endif %}" style="font-size:13px"></i>
+                            {{ score|floatformat:1 }}
+                        </span>
+                        {% endwith %}
+                    </td>
+
+                    <td>
+                        <span class="sp-suggestion-text" title="{{ s.suggestion }}">{{ s.suggestion }}</span>
+                    </td>
+
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'edit_student' s.id %}" class="sp-action-btn sp-action-edit">
+                                <i class="ti ti-edit" style="font-size:13px"></i> Edit
+                            </a>
+                            <a href="{% url 'delete_student' s.id %}"
+                               class="sp-action-btn sp-action-delete"
+                               onclick="return confirm('Delete {{ s.name }}? This cannot be undone.');">
+                                <i class="ti ti-trash" style="font-size:13px"></i> Delete
+                            </a>
+                        </div>
+                    </td>
                 </tr>
 
-            {% empty %}
-
+                {% empty %}
                 <tr>
-
-                    <td colspan="4" class="text-center">
-                        No students found.
+                    <td colspan="5">
+                        <div class="sp-empty">
+                            <i class="ti ti-users-off"></i>
+                            <div class="sp-empty-title">
+                                {% if request.GET.q %}No results for "{{ request.GET.q }}"{% else %}No students yet{% endif %}
+                            </div>
+                            <div class="sp-empty-sub">
+                                {% if request.GET.q %}Try a different name or <a href="{% url 'students' %}" style="color:#38bdf8">clear the search</a>.{% else %}Add your first student to get started.{% endif %}
+                            </div>
+                        </div>
                     </td>
-
                 </tr>
-
-            {% endfor %}
-
+                {% endfor %}
             </tbody>
-
         </table>
-
     </div>
-
 </div>
 
-</body>
-
-</html>
-```
+{% endblock %}

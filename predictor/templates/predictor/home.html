@@ -1,63 +1,290 @@
-<!DOCTYPE html>
-<html>
+{% extends 'predictor/base.html' %}
 
-<head>
-    <title>Student Performance Predictor</title>
+{% block title %}Home — Student Predictor{% endblock %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-</head>
+{% block extra_css %}
+<style>
+.sp-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.sp-field { display: flex; flex-direction: column; gap: 6px; }
+.sp-field-full { grid-column: 1 / -1; }
+.sp-field label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #64748b;
+}
+.sp-field .errorlist {
+    list-style: none; padding: 0; margin: 4px 0 0;
+    font-size: 12px; color: #f87171;
+}
+.sp-score-preview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+}
+.sp-score-tile {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 12px;
+}
+.sp-score-tile-label { font-size: 11px; color: #475569; margin-bottom: 6px; }
+.sp-score-tile-val   { font-size: 18px; font-weight: 600; color: #f1f5f9; }
+.sp-bar-track { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.sp-bar-fill  { height: 100%; border-radius: 2px; width: 0%; transition: width .3s ease; }
+.sp-submit-row { display: flex; align-items: center; gap: 16px; margin-top: 28px; }
+.sp-submit-hint { font-size: 12px; color: #475569; display: flex; align-items: center; gap: 6px; }
 
-<body>
+.sp-result-score {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1;
+}
+.sp-result-divider {
+    width: 1px;
+    background: rgba(255,255,255,.08);
+    align-self: stretch;
+    margin: 0 8px;
+}
+.sp-grade-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+.sp-grade-excellent { background: rgba(34,197,94,.1);  border: 1px solid rgba(34,197,94,.25);  color: #4ade80; }
+.sp-grade-moderate  { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); color: #fbbf24; }
+.sp-grade-risk      { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.25);  color: #f87171; }
 
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
+@media (max-width: 768px) {
+    .sp-form-grid    { grid-template-columns: 1fr; }
+    .sp-score-preview{ grid-template-columns: 1fr 1fr; }
+    .sp-field-full   { grid-column: 1; }
+    .sp-result-score { font-size: 48px; }
+    .sp-result-divider { display: none; }
+}
+</style>
+{% endblock %}
 
-        <a class="navbar-brand" href="{% url 'home' %}">
-            Student Predictor
-        </a>
+{% block content %}
 
-        <div>
-            <a href="{% url 'students' %}"
-               class="btn btn-outline-light me-2">
-                Students
-            </a>
+<div class="row justify-content-center">
+<div class="col-12 col-lg-9 col-xl-8">
 
-            <a href="{% url 'dashboard' %}"
-               class="btn btn-outline-light">
-                Dashboard
-            </a>
+    <div class="sp-hero" style="padding:48px 0 36px;">
+        <div class="sp-hero-eyebrow">
+            <i class="ti ti-sparkles" style="font-size:13px"></i>
+            AI-powered analysis
+        </div>
+        <h1 class="sp-hero-title">Predict student<br><span>performance</span></h1>
+        <p class="sp-hero-sub">Enter academic data and receive an AI-powered prediction with personalised suggestions.</p>
+    </div>
+
+    <div class="sp-score-preview">
+        <div class="sp-score-tile">
+            <div class="sp-score-tile-label">Attendance</div>
+            <div class="sp-score-tile-val" id="prev-attendance">—</div>
+            <div class="sp-bar-track"><div class="sp-bar-fill sp-progress-cyan"   id="bar-attendance"></div></div>
+        </div>
+        <div class="sp-score-tile">
+            <div class="sp-score-tile-label">Test 1</div>
+            <div class="sp-score-tile-val" id="prev-internal_test_1">—</div>
+            <div class="sp-bar-track"><div class="sp-bar-fill sp-progress-purple" id="bar-internal_test_1"></div></div>
+        </div>
+        <div class="sp-score-tile">
+            <div class="sp-score-tile-label">Test 2</div>
+            <div class="sp-score-tile-val" id="prev-internal_test_2">—</div>
+            <div class="sp-bar-track"><div class="sp-bar-fill sp-progress-amber"  id="bar-internal_test_2"></div></div>
+        </div>
+        <div class="sp-score-tile">
+            <div class="sp-score-tile-label">Assignment</div>
+            <div class="sp-score-tile-val" id="prev-assignment_score">—</div>
+            <div class="sp-bar-track"><div class="sp-bar-fill sp-progress-green"  id="bar-assignment_score"></div></div>
+        </div>
+        <div class="sp-score-tile">
+            <div class="sp-score-tile-label">Study hrs</div>
+            <div class="sp-score-tile-val" id="prev-study_hours">—</div>
+            <div class="sp-bar-track"><div class="sp-bar-fill" style="background:#a78bfa" id="bar-study_hours"></div></div>
+        </div>
+    </div>
+
+    <div class="sp-card">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="ti ti-user-edit" style="font-size:18px;color:#38bdf8"></i>
+            </div>
+            <div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;color:#f1f5f9;">Student details</div>
+                <div style="font-size:12px;color:#475569;">All fields are required</div>
+            </div>
         </div>
 
-    </div>
-</nav>
+        <form method="POST" novalidate>
+            {% csrf_token %}
 
-<div class="container mt-5">
-
-    <h2>Enter Student Details</h2>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-success">
-                {{ message }}
+            <div class="sp-form-grid">
+                {% for field in form %}
+                <div class="sp-field {% if field.name == 'name' or field.name == 'assignment_score' %}sp-field-full{% endif %}">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.name == 'attendance' %}<span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0"> (0–100%)</span>
+                        {% elif field.name == 'internal_test_1' or field.name == 'internal_test_2' %}<span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0"> (0–40)</span>
+                        {% elif field.name == 'assignment_score' %}<span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0"> (0–10)</span>
+                        {% elif field.name == 'study_hours' %}<span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0"> (0–24 hrs)</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                                <li><i class="ti ti-alert-circle" style="font-size:12px;vertical-align:-1px"></i> {{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+
+            <div class="sp-submit-row">
+                <button type="submit" class="sp-btn sp-btn-primary" style="padding:12px 28px;font-size:15px;">
+                    <i class="ti ti-brain" style="font-size:17px"></i>
+                    Predict performance
+                </button>
+                <span class="sp-submit-hint">
+                    <i class="ti ti-lock" style="font-size:14px"></i>
+                    Data stays private
+                </span>
+            </div>
+        </form>
+    </div>
+
+    {% if predicted_score %}
+    <div class="sp-card mt-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="ti ti-chart-bar" style="font-size:18px;color:#a78bfa"></i>
+            </div>
+            <div>
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;color:#f1f5f9;">Prediction result</div>
+                <div style="font-size:12px;color:#475569;">Based on your submitted data</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-4 align-items-start flex-wrap">
+            <div style="text-align:center;min-width:130px;">
+                <div style="font-size:12px;color:#475569;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Final score</div>
+                <div class="sp-result-score
+                    {% if predicted_score >= 85 %}text-cyan
+                    {% elif predicted_score >= 60 %}" style="color:#fbbf24;"
+                    {% else %}" style="color:#f87171;"
+                    {% endif %}
+                ">{{ predicted_score }}</div>
+                <div style="font-size:12px;color:#475569;margin-top:4px;">out of 100</div>
+            </div>
+
+            <div class="sp-result-divider"></div>
+
+            <div style="flex:1;min-width:200px;">
+                {% if predicted_score >= 85 %}
+                    <div class="sp-grade-pill sp-grade-excellent">
+                        <i class="ti ti-trending-up" style="font-size:14px"></i> Excellent
+                    </div>
+                {% elif predicted_score >= 60 %}
+                    <div class="sp-grade-pill sp-grade-moderate">
+                        <i class="ti ti-minus" style="font-size:14px"></i> Moderate
+                    </div>
+                {% else %}
+                    <div class="sp-grade-pill sp-grade-risk">
+                        <i class="ti ti-alert-triangle" style="font-size:14px"></i> At risk
+                    </div>
+                {% endif %}
+
+                <div style="font-size:12px;font-weight:500;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Suggestions</div>
+                <p style="font-size:14px;color:#cbd5e1;line-height:1.7;margin:0;">{{ suggestion }}</p>
+            </div>
+        </div>
+
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);">
+            <a href="{% url 'home' %}" class="sp-btn sp-btn-secondary">
+                <i class="ti ti-refresh" style="font-size:16px"></i>
+                Predict another student
+            </a>
+        </div>
+    </div>
     {% endif %}
 
-    <form method="POST">
-
-        {% csrf_token %}
-
-        {{ form.as_p }}
-
-        <button type="submit" class="btn btn-primary">
-            Submit
-        </button>
-
-    </form>
+    <div class="row g-3 mt-3">
+        <div class="col-4">
+            <div class="sp-stat text-center">
+                <div class="sp-stat-label">Model accuracy</div>
+                <div class="sp-stat-value" style="font-size:22px;color:#38bdf8;">78%</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="sp-stat text-center">
+                <div class="sp-stat-label">MAE</div>
+                <div class="sp-stat-value" style="font-size:22px;color:#a78bfa;">4.16</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="sp-stat text-center">
+                <div class="sp-stat-label">RMSE</div>
+                <div class="sp-stat-value" style="font-size:22px;color:#4ade80;">5.25</div>
+            </div>
+        </div>
+    </div>
 
 </div>
+</div>
 
-</body>
+{% endblock %}
 
-</html>
+{% block extra_js %}
+<script>
+(function () {
+    var fields = [
+        { name: 'attendance',       max: 100, suffix: '%' },
+        { name: 'internal_test_1',  max: 40,  suffix: ''  },
+        { name: 'internal_test_2',  max: 40,  suffix: ''  },
+        { name: 'assignment_score', max: 10,  suffix: ''  },
+        { name: 'study_hours',      max: 24,  suffix: 'h' },
+    ];
+
+    fields.forEach(function (f) {
+        var input = document.querySelector('[name="' + f.name + '"]');
+        if (!input) return;
+        input.classList.add('form-control');
+
+        function update() {
+            var v = parseFloat(input.value);
+            var prev = document.getElementById('prev-' + f.name);
+            var bar  = document.getElementById('bar-'  + f.name);
+            if (!prev || !bar) return;
+            if (isNaN(v)) {
+                prev.textContent = '—';
+                bar.style.width = '0%';
+            } else {
+                prev.textContent = Math.round(v) + f.suffix;
+                bar.style.width = Math.min(100, Math.round((v / f.max) * 100)) + '%';
+            }
+        }
+        input.addEventListener('input', update);
+        update();
+    });
+
+    var nameInput = document.querySelector('[name="name"]');
+    if (nameInput) nameInput.classList.add('form-control');
+})();
+</script>
+{% endblock %}

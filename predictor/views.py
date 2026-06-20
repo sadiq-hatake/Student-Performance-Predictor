@@ -9,10 +9,15 @@ from django.db.models import Avg, Max
 
 from .forms import StudentForm
 from .models import Student
-from .ml_utils import model
+from .ml_utils import model,metrics
+
+
 
 
 def home(request):
+
+    predicted_score = None
+    suggestion = None
 
     if request.method == 'POST':
 
@@ -30,30 +35,34 @@ def home(request):
                 student.study_hours
             ]])
 
-            student.predicted_score = round(
-                prediction[0],
-                2
-            )
+            student.predicted_score = round(prediction[0], 2)
 
             student.suggestion = generate_suggestion(student)
+
             student.save()
+
+            predicted_score = student.predicted_score
+            suggestion = student.suggestion
 
             messages.success(
                 request,
-                'Student added successfully!'
+                "Prediction generated successfully!"
             )
-
-            return redirect('home')
 
     else:
         form = StudentForm()
 
+    context = {
+        'form': form,
+        'predicted_score': predicted_score,
+        'suggestion': suggestion
+    }
+
     return render(
         request,
         'predictor/home.html',
-        {'form': form}
+        context
     )
-
 
 def students(request):
 
@@ -166,7 +175,14 @@ def dashboard(request):
     context = {
         'total_students': total_students,
         'average_score': average_score,
-        'highest_score': highest_score
+        'highest_score': highest_score,
+
+        'r2_score': metrics['r2_score'],
+    'mae': metrics['mae'],
+    'rmse': metrics['rmse'],
+
+    'feature_importance': metrics['feature_importance']
+        
     }
 
     return render(

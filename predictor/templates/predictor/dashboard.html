@@ -1,77 +1,219 @@
-<!DOCTYPE html>
-<html>
+{% extends 'predictor/base.html' %}
 
-<head>
-    <title>Dashboard</title>
+{% block title %}Dashboard — Student Predictor{% endblock %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-</head>
+{% block extra_css %}
+<style>
+.sp-metric-card {
+    background: var(--navy-800, #1a2238);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.sp-metric-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+.sp-metric-label {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 500;
+}
+.sp-metric-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1;
+}
 
-<body>
+.sp-model-card {
+    background: rgba(255,255,255,.02);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 14px;
+    padding: 20px 24px;
+    text-align: center;
+}
+.sp-model-label {
+    font-size: 12px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+.sp-model-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.sp-model-hint {
+    font-size: 11px;
+    color: #334155;
+}
 
-<nav class="navbar navbar-dark bg-dark">
-    <div class="container">
+.sp-fi-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.sp-fi-row:last-child { border-bottom: none; }
+.sp-fi-name {
+    width: 160px;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #cbd5e1;
+    font-weight: 500;
+}
+.sp-fi-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.sp-fi-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #38bdf8, #8b5cf6);
+    transition: width .6s ease;
+}
+.sp-fi-pct {
+    width: 52px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 500;
+    color: #38bdf8;
+    flex-shrink: 0;
+}
+</style>
+{% endblock %}
 
-        <a class="navbar-brand" href="{% url 'home' %}">
-            Student Predictor
-        </a>
+{% block content %}
 
-        <div>
-            <a href="{% url 'students' %}"
-               class="btn btn-outline-light me-2">
-                Students
-            </a>
-
-            <a href="{% url 'dashboard' %}"
-               class="btn btn-outline-light">
-                Dashboard
-            </a>
-        </div>
-
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:600;color:#f1f5f9;margin:0;">Dashboard</h1>
+        <p style="font-size:13px;color:#475569;margin:4px 0 0;">Overview of students and model performance</p>
     </div>
-</nav>
+    <a href="{% url 'home' %}" class="sp-btn sp-btn-primary">
+        <i class="ti ti-plus" style="font-size:16px"></i>
+        Add student
+    </a>
+</div>
 
-<div class="container mt-5">
+{# Student stats #}
+<div class="sp-section-label mb-3">Student overview</div>
+<div class="row g-3 mb-5">
 
-    <h2 class="mb-4">Dashboard</h2>
-
-    <div class="row g-4">
-
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3 text-center">
-
-                <h5>Total Students</h5>
-
-                <h2>{{ total_students }}</h2>
-
+    <div class="col-12 col-md-4">
+        <div class="sp-metric-card">
+            <div class="sp-metric-icon" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);">
+                <i class="ti ti-users" style="color:#38bdf8"></i>
+            </div>
+            <div>
+                <div class="sp-metric-label">Total students</div>
+                <div class="sp-metric-value">{{ total_students }}</div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3 text-center">
-
-                <h5>Average Predicted Score</h5>
-
-                <h2>{{ average_score|default:0|floatformat:2 }}</h2>
-
+    <div class="col-12 col-md-4">
+        <div class="sp-metric-card">
+            <div class="sp-metric-icon" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);">
+                <i class="ti ti-chart-line" style="color:#a78bfa"></i>
+            </div>
+            <div>
+                <div class="sp-metric-label">Average predicted score</div>
+                <div class="sp-metric-value">{{ average_score|default:0|floatformat:1 }}</div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3 text-center">
-
-                <h5>Highest Predicted Score</h5>
-
-                <h2>{{ highest_score|default:0|floatformat:2 }}</h2>
-
+    <div class="col-12 col-md-4">
+        <div class="sp-metric-card">
+            <div class="sp-metric-icon" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);">
+                <i class="ti ti-trophy" style="color:#4ade80"></i>
+            </div>
+            <div>
+                <div class="sp-metric-label">Highest predicted score</div>
+                <div class="sp-metric-value">{{ highest_score|default:0|floatformat:1 }}</div>
             </div>
         </div>
-
     </div>
 
 </div>
 
-</body>
+{# Model performance #}
+<div class="sp-section-label mb-3">Model performance</div>
+<div class="row g-3 mb-5">
 
-</html>
+    <div class="col-12 col-md-4">
+        <div class="sp-model-card">
+            <div class="sp-model-label">R² Score</div>
+            <div class="sp-model-value" style="color:#38bdf8;">{{ r2_score|default:0|floatformat:2 }}</div>
+            <div class="sp-model-hint">Closer to 1.0 is better</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="sp-model-card">
+            <div class="sp-model-label">MAE</div>
+            <div class="sp-model-value" style="color:#4ade80;">{{ mae|default:0|floatformat:2 }}</div>
+            <div class="sp-model-hint">Lower is better</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="sp-model-card">
+            <div class="sp-model-label">RMSE</div>
+            <div class="sp-model-value" style="color:#fbbf24;">{{ rmse|default:0|floatformat:2 }}</div>
+            <div class="sp-model-hint">Lower is better</div>
+        </div>
+    </div>
+
+</div>
+
+{# Feature importance #}
+<div class="sp-section-label mb-3">Feature importance</div>
+<div class="sp-card">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="ti ti-adjustments-horizontal" style="font-size:18px;color:#38bdf8"></i>
+        </div>
+        <div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;color:#f1f5f9;">What drives the prediction</div>
+            <div style="font-size:12px;color:#475569;">Higher % = greater influence on the predicted score</div>
+        </div>
+    </div>
+
+    {% for item in feature_importance %}
+    <div class="sp-fi-row">
+        <div class="sp-fi-name">{{ item.Feature }}</div>
+        <div class="sp-fi-track">
+            <div class="sp-fi-fill" style="width:{{ item.Importance|floatformat:0 }}%"></div>
+        </div>
+        <div class="sp-fi-pct">{{ item.Importance|floatformat:1 }}%</div>
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:40px 0;color:#475569;">
+        <i class="ti ti-database-off" style="font-size:32px;display:block;margin-bottom:10px;color:#334155"></i>
+        No feature importance data available.
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
